@@ -1,0 +1,83 @@
+---
+title: "preregistration_mail_mining"
+author: "Marton Kovacs"
+date: '2019 october 8 '
+output: html_document
+---
+
+# Load packages
+
+```{r setup, include=FALSE}
+library(gmailr)
+library(purrr)
+library(tidytext)
+library(stringr)
+```
+
+# Get gmailr auth
+
+* Go to https://developers.google.com/gmail/api/quickstart/python
+* Click on the "Enable the Gmail API" button
+* Add the path to the downloaded json file in the followng function
+
+```{r}
+gm_auth_configure(path = "credentials.json")
+```
+
+* Run the following function and enable gmailr to access your gmail account in a browser window
+
+```{r}
+gm_auth()
+```
+
+* If you want to clear the auth tokens run the following code:
+
+```{r}
+gm_deauth()
+```
+
+# Get all the emails of a label
+
+List all the labels.
+
+```{r}
+all_labels <-
+  gm_labels() %>% 
+  flatten()
+```
+
+Check the names of the labels to find the needed.
+Extract the label id.
+
+```{r}
+map(all_labels, "name")
+
+label_id <- 
+  all_labels[[3]][1] %>% 
+  flatten_chr()
+```
+
+Check the number of all messages under the label.
+
+```{r}
+gm_label(label_id)$messagesTotal
+```
+
+Get all the emails that are labelled with the chosen label.
+
+```{r}
+message_ids <- 
+  gm_messages(label_ids = label_id)
+```
+
+Choose one message.
+
+```{r}
+my_message <- gm_message(gm_id(message_ids)[[1]])
+```
+
+Get the body of the message.
+
+```{r}
+gm_body(my_message)
+```
