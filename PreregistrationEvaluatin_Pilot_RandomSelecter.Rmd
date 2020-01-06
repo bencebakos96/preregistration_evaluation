@@ -64,12 +64,6 @@ email_database %>%
 ```
 
 # 1 batch
-# Set seed
-
-```{r}
-set.seed(42)
-```
-
 # Select 100 email addresses randomly
 
 ```{r}
