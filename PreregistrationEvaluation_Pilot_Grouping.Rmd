@@ -1,7 +1,7 @@
 ---
 title: "PreregistrationEvaluation_Pilot_Grouping"
 author: "Marton Kovacs"
-date: '2019 november 27 '
+date: 'r format(Sys.time(), "%d %B, %Y")`'
 output: html_document
 ---
 
