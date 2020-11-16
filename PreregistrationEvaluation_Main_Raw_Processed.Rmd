@@ -1,7 +1,58 @@
 ---
 title: "PreregistrationEvaluation_Main_Raw_Processed"
+author: "Marton Kovacs & Bence Bakos"
 date: "11/12/2020"
 output: html_document
 ---
 
 R_Z3mrRm2XJpVRZcd  meant to respond strongly agree!
+
+# Load packages
+
+```{r packages}
+library(tidyverse)
+```
+
+# Import data
+
+```{r import data}
+raw_data <- read_tsv("Data/Main/Raw/PreregistrationEvaluation_Main_Raw.tsv")
+```
+
+# Filtering responses
+
+The analysis will concentrate only on the answers of the Preregistration Group and the Control Group. Unfinished responses are excluded. Participants who did not accept the informed consent form are excluded. An attention check was also included.
+
+```{r}
+group_interest <- c("prereg", "control")
+
+filtered_data <- raw_data %>% 
+  filter(Finished == "True",
+         Progress == 100,
+         informed_consent == "Yes",
+         group %in% group_interest,
+         group == "control" & control_attention == "4
+Four" | 
+           group == "prereg" & prereg_attention == "4
+Four")
+
+filtered_data %>% 
+  count(group)
+```
+
+# Removing irrelevant variables
+
+```{r removing}
+filtered_data <- filtered_data %>% 
+  select(ResponseId, control_hypothesis:prereg_qrp, planning:changed_comment) %>% 
+  select(-c(control_attention, prereg_attention))
+
+glimpse(filtered_data)
+```
+
+# Recoding response variables to numeric
+
+```{r recoding}
+
+```
+
