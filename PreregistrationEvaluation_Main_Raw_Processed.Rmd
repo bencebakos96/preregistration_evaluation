@@ -1,11 +1,9 @@
 ---
 title: "PreregistrationEvaluation_Main_Raw_Processed"
 author: "Marton Kovacs & Bence Bakos"
-date: "11/12/2020"
+date: "18/12/2020"
 output: html_document
 ---
-
-R_Z3mrRm2XJpVRZcd  meant to respond strongly agree!
 
 # Load packages
 
@@ -18,6 +16,20 @@ library(tidyverse)
 ```{r import data}
 raw_data <- read_tsv("Data/Main/Raw/PreregistrationEvaluation_Main_Raw.tsv")
 ```
+
+# Changing response
+
+R_Z3mrRm2XJpVRZcd  meant to respond strongly agree: "For the question about whether preregistration made it easier to avoid questionable research practices, I meant to select ""Strongly agree"", but selected ""strongly disagree"" by mistake. Please change my response to ""Strongly Agree"
+
+The respondent actually gave the "Very Strongly Disagree" answer.
+
+```{r changing response}
+which(grepl("R_Z3mrRm2XJpVRZcd", raw_data$ResponseId))
+which(colnames(raw_data)=="other_qrp" )
+
+raw_data[241, 60] = "Strongly Agree"
+```
+
 
 # Filtering responses
 
@@ -36,8 +48,13 @@ Four" |
            group == "prereg" & prereg_attention == "4
 Four")
 
+#How many respondents do we have from the Prereg and the Control groups?
 filtered_data %>% 
   count(group)
+
+#How many respondents do we have from each research type?
+filtered_data %>% 
+  count(research_type)
 ```
 
 # Removing irrelevant variables
@@ -52,7 +69,107 @@ glimpse(filtered_data)
 
 # Recoding response variables to numeric
 
-```{r recoding}
+Several response variables need to be recoded to numeric values. As a first step, several keys are created to make the recoding process easier. Second, the keys are applied.
 
+```{r recoding}
+#Generating keys
+key1 <- c("1
+Would get less thought-through" = 1, "4
+Would not change" = 4, "7
+Would get more thought.through" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key2 <- c("1
+Would get worse" = 1, "4
+Would not change" = 4, "7
+Would get better" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key3 <- c("1
+Would get worse" = 1, "4
+Would not change" = 4, "7
+Would improve" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key4 <- c("1
+Would be longer" = 1, "4
+Would not change" = 4, "7
+Would be shorter" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key5 <- c("1
+Would be increased" = 1, "4
+Would not change" = 4, "7
+Would be reduced" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key6 <- c("Very Strongly Disagree" = 1,
+          "Strongly Disagree" = 2,
+          "Disagree" = 3,
+          "Neither Agree or Disagree" = 4,
+          "Agree" = 5,
+          "Strongly Agree" = 6,
+          "Very Strongly Agree" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99)
+
+key7 <- c("1
+Got less thought-through" = 1, "4
+Did not change" = 4, "7
+Got more thought.through" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key8 <- c("1
+Got worse" = 1, "4
+Did not change" = 4, "7
+Got better" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key9 <- c("1
+Got worse" = 1, "4
+Did not change" = 4, "7
+Improved" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key10 <- c("1
+Was longer" = 1, "4
+Did not change" = 4, "7
+Was shorter" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+key11 <- c("1
+Was increased" = 1, "4
+Did not change" = 4, "7
+Was reduced" = 7, "I do not know" = 99, "Not applicable" = 99,
+"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+
+#Recoding variables
+recoded_data <- filtered_data %>% 
+  mutate(control_hypothesis = recode(control_hypothesis, !!!key1)) %>% 
+  mutate(control_design = recode(control_design, !!!key1)) %>% 
+  mutate(control_analysis = recode(control_analysis, !!!key1)) %>% 
+  mutate(control_rdm = recode(control_rdm, !!!key1)) %>% 
+  mutate(control_workflow = recode(control_workflow, !!!key1)) %>% 
+  mutate(control_collab = recode(control_collab, !!!key2)) %>% 
+  mutate(control_preparatory = recode(control_preparatory, !!!key3)) %>% 
+  mutate(control_duration = recode(control_duration, !!!key4)) %>% 
+  mutate(control_stress = recode(control_stress, !!!key5)) %>% 
+  mutate(control_qrp = recode(control_qrp, !!!key6)) %>% 
+  mutate(prereg_hypothesis = recode(prereg_hypothesis, !!!key7)) %>% 
+  mutate(prereg_design = recode(prereg_design, !!!key7)) %>% 
+  mutate(prereg_analysis = recode(prereg_analysis, !!!key7)) %>% 
+  mutate(prereg_rmd = recode(prereg_rmd, !!!key7)) %>% 
+  mutate(prereg_workflow = recode(prereg_workflow, !!!key7)) %>% 
+  mutate(prereg_collab = recode(prereg_collab, !!!key8)) %>% 
+  mutate(prereg_preparatory = recode(prereg_preparatory, !!!key9)) %>% 
+  mutate(prereg_duration = recode(prereg_duration, !!!key10)) %>% 
+  mutate(prereg_stress = recode(prereg_stress, !!!key11)) %>% 
+  mutate(prereg_qrp = recode(prereg_qrp, !!!key6)) %>% 
+  mutate(recommend = recode(recommend, !!!key6))
 ```
 
+# Write data
+
+```{r export}
+write_tsv(recoded_data, "Data/Main/Processed/Import/PreregistrationEvaluation_Main_Processed.tsv")
+```
