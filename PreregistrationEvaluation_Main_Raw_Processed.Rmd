@@ -116,7 +116,7 @@ key6 <- c("Very Strongly Disagree" = 1,
 key7 <- c("1
 Got less thought-through" = 1, "4
 Did not change" = 4, "7
-Got more thought.through" = 7, "I do not know" = 99, "Not applicable" = 99,
+Got more thought-through" = 7, "I do not know" = 99, "Not applicable" = 99,
 "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
 key8 <- c("1
