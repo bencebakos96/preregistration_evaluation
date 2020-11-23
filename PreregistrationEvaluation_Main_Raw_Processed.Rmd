@@ -15,19 +15,19 @@ library(tidyverse)
 
 ```{r import data}
 raw_data <- read_tsv("Data/Main/Raw/PreregistrationEvaluation_Main_Raw.tsv")
+raw_data <- janitor::clean_names(raw_data)
 ```
 
 # Changing response
 
-R_Z3mrRm2XJpVRZcd  meant to respond strongly agree: "For the question about whether preregistration made it easier to avoid questionable research practices, I meant to select ""Strongly agree"", but selected ""strongly disagree"" by mistake. Please change my response to ""Strongly Agree"
+R_Z3mrRm2XJpVRZcd  meant to respond strongly agree: 'For the question about whether preregistration made it easier to avoid questionable research practices, I meant to select "Strongly agree", but selected "strongly disagree" by mistake. Please change my response to "Strongly Agree"'
 
 The respondent actually gave the "Very Strongly Disagree" answer.
 
 ```{r changing response}
-which(grepl("R_Z3mrRm2XJpVRZcd", raw_data$ResponseId))
-which(colnames(raw_data)=="other_qrp" )
-
-raw_data[241, 60] = "Strongly Agree"
+raw_data <- raw_data %>%
+  mutate(other_qrp = case_when(response_id == "R_Z3mrRm2XJpVRZcd" ~ "Strongly Agree",
+                                                     TRUE ~ other_qrp))
 ```
 
 
@@ -36,17 +36,25 @@ raw_data[241, 60] = "Strongly Agree"
 The analysis will concentrate only on the answers of the Preregistration Group and the Control Group. Unfinished responses are excluded. Participants who did not accept the informed consent form are excluded. An attention check was also included.
 
 ```{r}
+#removing Qualtrics labels
+label <-
+  raw_data %>% 
+  slice(1:2)
+
+raw_data <-
+  raw_data %>% 
+  slice(-(1:2))
+
+
 group_interest <- c("prereg", "control")
 
 filtered_data <- raw_data %>% 
-  filter(Finished == "True",
-         Progress == 100,
+  filter(finished == "True",
+         progress == "100",
          informed_consent == "Yes",
          group %in% group_interest,
-         group == "control" & control_attention == "4
-Four" | 
-           group == "prereg" & prereg_attention == "4
-Four")
+         group == "control" & control_attention == "4\nFour" | 
+           group == "prereg" & prereg_attention == "4\nFour")
 
 #How many respondents do we have from the Prereg and the Control groups?
 filtered_data %>% 
@@ -61,7 +69,7 @@ filtered_data %>%
 
 ```{r removing}
 filtered_data <- filtered_data %>% 
-  select(ResponseId, control_hypothesis:prereg_qrp, planning:changed_comment) %>% 
+  select(response_id, control_hypothesis:prereg_qrp, planning:changed_comment) %>% 
   select(-c(control_attention, prereg_attention))
 
 glimpse(filtered_data)
@@ -73,35 +81,40 @@ Several response variables need to be recoded to numeric values. As a first step
 
 ```{r recoding}
 #Generating keys
-key1 <- c("1
-Would get less thought-through" = 1, "4
-Would not change" = 4, "7
-Would get more thought.through" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key1 <- c("1\nWould get less thought-through" = 1,
+          "4\nWould not change" = 4,
+          "7\nWould get more thought-through" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99,
+          "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
-key2 <- c("1
-Would get worse" = 1, "4
-Would not change" = 4, "7
-Would get better" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key2 <- c("1\nWould get worse" = 1,
+          "4\nWould not change" = 4,
+          "7\nWould get better" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99,
+          "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
-key3 <- c("1
-Would get worse" = 1, "4
-Would not change" = 4, "7
-Would improve" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key3 <- c("1\nWould get worse" = 1,
+          "4\nWould not change" = 4,
+          "7\nWould improve" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99,
+          "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
-key4 <- c("1
-Would be longer" = 1, "4
-Would not change" = 4, "7
-Would be shorter" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key4 <- c("1\nWould be longer" = 1,
+          "4\nWould not change" = 4,
+          "7\nWould be shorter" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99,
+          "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
-key5 <- c("1
-Would be increased" = 1, "4
-Would not change" = 4, "7
-Would be reduced" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key5 <- c("1\nWould be increased" = 1,
+          "4\nWould not change" = 4,
+          "7\nWould be reduced" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99,
+          "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
 key6 <- c("Very Strongly Disagree" = 1,
           "Strongly Disagree" = 2,
@@ -113,63 +126,106 @@ key6 <- c("Very Strongly Disagree" = 1,
           "I do not know" = 99,
           "Not applicable" = 99)
 
-key7 <- c("1
-Got less thought-through" = 1, "4
-Did not change" = 4, "7
-Got more thought-through" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key7 <- c("1\nGot less thought-through" = 1,
+          "4\nDid not change" = 4,
+          "7\nGot more thought-through" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99,
+          "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
-key8 <- c("1
-Got worse" = 1, "4
-Did not change" = 4, "7
-Got better" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key8 <- c("1\nGot worse" = 1,
+          "4\nDid not change" = 4,
+          "7\nGot better" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99,
+          "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
-key9 <- c("1
-Got worse" = 1, "4
-Did not change" = 4, "7
-Improved" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key9 <- c("1\nGot worse" = 1,
+          "4\nDid not change" = 4,
+          "7\nImproved" = 7,
+          "I do not know" = 99,
+          "Not applicable" = 99,
+          "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
-key10 <- c("1
-Was longer" = 1, "4
-Did not change" = 4, "7
-Was shorter" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key10 <- c("1\nWas longer" = 1,
+           "4\nDid not change" = 4,
+           "7\nWas shorter" = 7,
+           "I do not know" = 99,
+           "Not applicable" = 99,
+           "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
-key11 <- c("1
-Was increased" = 1, "4
-Did not change" = 4, "7
-Was reduced" = 7, "I do not know" = 99, "Not applicable" = 99,
-"2" = 2, "3" = 3, "5" = 5, "6" = 6)
+key11 <- c("1\nWas increased" = 1,
+           "4\nDid not change" = 4,
+           "7\nWas reduced" = 7,
+           "I do not know" = 99,
+           "Not applicable" = 99,
+           "2" = 2, "3" = 3, "5" = 5, "6" = 6)
 
 #Recoding variables
 recoded_data <- filtered_data %>% 
-  mutate(control_hypothesis = recode(control_hypothesis, !!!key1)) %>% 
-  mutate(control_design = recode(control_design, !!!key1)) %>% 
-  mutate(control_analysis = recode(control_analysis, !!!key1)) %>% 
-  mutate(control_rdm = recode(control_rdm, !!!key1)) %>% 
-  mutate(control_workflow = recode(control_workflow, !!!key1)) %>% 
-  mutate(control_collab = recode(control_collab, !!!key2)) %>% 
-  mutate(control_preparatory = recode(control_preparatory, !!!key3)) %>% 
-  mutate(control_duration = recode(control_duration, !!!key4)) %>% 
-  mutate(control_stress = recode(control_stress, !!!key5)) %>% 
-  mutate(control_qrp = recode(control_qrp, !!!key6)) %>% 
-  mutate(prereg_hypothesis = recode(prereg_hypothesis, !!!key7)) %>% 
-  mutate(prereg_design = recode(prereg_design, !!!key7)) %>% 
-  mutate(prereg_analysis = recode(prereg_analysis, !!!key7)) %>% 
-  mutate(prereg_rmd = recode(prereg_rmd, !!!key7)) %>% 
-  mutate(prereg_workflow = recode(prereg_workflow, !!!key7)) %>% 
-  mutate(prereg_collab = recode(prereg_collab, !!!key8)) %>% 
-  mutate(prereg_preparatory = recode(prereg_preparatory, !!!key9)) %>% 
-  mutate(prereg_duration = recode(prereg_duration, !!!key10)) %>% 
-  mutate(prereg_stress = recode(prereg_stress, !!!key11)) %>% 
-  mutate(prereg_qrp = recode(prereg_qrp, !!!key6)) %>% 
-  mutate(recommend = recode(recommend, !!!key6))
+  mutate(control_hypothesis = recode(control_hypothesis, !!!key1),
+         control_design = recode(control_design, !!!key1),
+         control_analysis = recode(control_analysis, !!!key1),
+         control_rdm = recode(control_rdm, !!!key1),
+         control_workflow = recode(control_workflow, !!!key1),
+         control_collab = recode(control_collab, !!!key2),
+         control_preparatory = recode(control_preparatory, !!!key3),
+         control_duration = recode(control_duration, !!!key4),
+         control_stress = recode(control_stress, !!!key5),
+         control_qrp = recode(control_qrp, !!!key6),
+         prereg_hypothesis = recode(prereg_hypothesis, !!!key7),
+         prereg_design = recode(prereg_design, !!!key7),
+         prereg_analysis = recode(prereg_analysis, !!!key7),
+         prereg_rmd = recode(prereg_rmd, !!!key7),
+         prereg_workflow = recode(prereg_workflow, !!!key7),
+         prereg_collab = recode(prereg_collab, !!!key8),
+         prereg_preparatory = recode(prereg_preparatory, !!!key9),
+         prereg_duration = recode(prereg_duration, !!!key10),
+         prereg_stress = recode(prereg_stress, !!!key11),
+         prereg_qrp = recode(prereg_qrp, !!!key6),
+         recommend = recode(recommend, !!!key6))
 ```
+
+# Tidying data
+
+```{r tidying}
+tidy_data <- 
+  filtered_data %>% 
+  # Gather all the columns with "prereg_" or "control_" prefix
+  pivot_longer(
+    cols = union(contains("prereg_"),contains("control_")),
+    names_to = "variable_names",
+    values_to = "values"
+  ) %>% 
+  # Response was forced so all NA values mean that the participant was not member of that group
+  # So we can drop them
+  drop_na(values) %>% 
+  # Delete prefix and convert character variables to numeric
+  mutate(variable_names = str_remove(variable_names, "prereg_|control_"),
+         # Because there is a mismatch in the variable names between the control and prereg group
+         variable_names = case_when(variable_names == "rmd" ~ "rdm",
+                                    TRUE ~ variable_names),
+         values = case_when(values == "I do not know" ~ "0",
+                            values == "Not applicable" ~ "99",
+                            values == "Very Strongly Disagree" ~ "1",
+                            values == "Strongly Disagree" ~ "2",
+                            values == "Disagree" ~ "3",
+                            values == "Neither Agree or Disagree" ~ "4",
+                            values == "Agree" ~ "5",
+                            values == "Strongly Agree" ~ "6",
+                            values == "Very Strongly Agree" ~ "7",
+                            TRUE ~ values),
+         values = as.integer(str_extract(values, "[0-9]{1,2}"))) %>% 
+  # Spread gathered columns to make the datatable tidy
+  pivot_wider(
+    names_from = variable_names,
+    values_from = values
+  )
+```
+
 
 # Write data
 
 ```{r export}
-write_tsv(recoded_data, "Data/Main/Processed/Import/PreregistrationEvaluation_Main_Processed.tsv")
+write_tsv(tidy_data, "Data/Main/Processed/Import/PreregistrationEvaluation_Main_Processed.tsv")
 ```
