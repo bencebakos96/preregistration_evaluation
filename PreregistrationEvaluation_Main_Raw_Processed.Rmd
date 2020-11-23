@@ -114,6 +114,25 @@ tidy_data <-
   )
 ```
 
+# Grouping research fields
+
+We group our respondents into research fields based on their responses to an open-ended question regarding their research field. We do the same for respondents who answered "Other" to our research type question.
+
+```{r fields}
+fields_old <- tidy_data %>% 
+  select(response_id, field) %>% 
+  add_column(final_field = NA)
+
+writexl::write_xlsx(fields_old, "Data/Main/Processed/Import/PreregistrationEvaluation_Fields_Old.xlsx")
+
+type_other <- tidy_data %>% 
+  filter(research_type == "Other") %>% 
+  select(response_id, research_type_6_text) %>% 
+  add_column(final_research_type = NA)
+
+writexl::write_xlsx(type_other, "Data/Main/Processed/Import/PreregistrationEvaluation_Type_Other.xlsx")
+```
+
 
 # Write data
 
